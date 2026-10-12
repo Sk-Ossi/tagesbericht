@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tagesbericht</title>
+<style>
+:root{
+  --bg:#0f1013;--panel:#181a1f;--panel2:#202329;--line:#343842;
+  --text:#f2f3f5;--muted:#a7adb7;--accent:#7b2336;--accent2:#b54a62;
+  --ok:#4f8f6a;--warn:#b08a4b
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:Segoe UI,Arial,sans-serif;color:var(--text);
+  background:radial-gradient(circle at top left,#1b1d22 0,#101114 45%,#0b0c0f 100%)
+}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:grid;grid-template-columns:290px minmax(0,1fr);min-height:100vh}
+.sidebar{
+  padding:24px 18px;border-right:1px solid var(--line);background:#0e0f12;
+  position:sticky;top:0;height:100vh;overflow:auto
+}
+.brand{padding:4px 8px 20px}
+.brand h1{margin:0 0 5px;font-size:22px}
+.brand p{margin:0;color:var(--muted);font-size:13px}
+.nav-btn,.archive-item{
+  width:100%;border:1px solid transparent;background:transparent;color:var(--text);
+  padding:11px 12px;border-radius:12px;text-align:left;margin:4px 0
+}
+
+.new-report-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  min-height:48px;
+  margin:8px 0 12px;
+  padding:12px 14px;
+  border-color:transparent;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+  font-weight:700;
+  text-align:center;
+  box-shadow:0 8px 22px rgba(123,35,54,.26);
+}
+.new-report-btn:hover{
+  filter:brightness(1.08);
+  transform:translateY(-1px);
+}
+.new-report-btn:active{
+  transform:translateY(0);
+}
+.new-report-icon{
+  display:inline-grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:rgba(255,255,255,.14);
+  font-size:18px;
+  line-height:1;
+}
+
+.nav-btn:hover{background:var(--panel2);border-color:var(--line)}
+.archive-title{margin:22px 8px 8px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em}
+.archive-tools{margin:0 0 10px}
+.archive-tools input{
+  width:100%;border:1px solid var(--line);background:#111318;color:var(--text);
+  border-radius:10px;padding:9px 10px;outline:none;margin-bottom:8px
+}
+.archive-tools input:focus{border-color:#7a4a55;box-shadow:0 0 0 3px rgba(181,74,98,.12)}
+.archive-filter{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.filter-btn{
+  border:1px solid var(--line);background:#15171b;color:var(--muted);
+  border-radius:9px;padding:7px 6px;font-size:11px
+}
+.filter-btn.active{background:#3a1f27;border-color:#8f3d52;color:#fff}
+.archive-item{background:#15171b;border-color:#252932}
+.archive-item strong{display:block;font-size:14px}
+.archive-item span{color:var(--muted);font-size:12px}
+.empty{padding:8px;color:var(--muted);font-size:13px}
+.main{padding:28px;max-width:1500px;width:100%;margin:0 auto;min-width:0}
+.topbar{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:22px}
+.topbar h2{margin:0 0 5px;font-size:30px}
+.topbar p{margin:0;color:var(--muted)}
+.action-stack{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+}
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.utility-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.utility-btn{
+  padding:8px 11px;
+  font-size:12px;
+  background:#15171b;
+  color:var(--muted);
+}
+.utility-btn:hover{
+  color:var(--text);
+  border-color:#505560;
+}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:10px 14px;border-radius:11px}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+.btn.danger{background:#2a1719;border-color:#5b2e34;color:#ffd9df}
+.btn.ghost{background:transparent}
+.statusbar{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--muted);font-size:13px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--warn)}
+.dot.done{background:var(--ok)}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.full{grid-column:1/-1}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:18px;
+  padding:20px;min-width:0
+}
+.card h3{margin:0 0 16px;font-size:18px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{margin-bottom:15px}
+.field:last-child{margin-bottom:0}
+label{display:block;font-size:13px;color:#d9dde3;margin-bottom:7px}
+.hint{color:var(--muted)}
+input[type=text],input[type=date],textarea{
+  width:100%;border:1px solid var(--line);background:#111318;color:var(--text);
+  border-radius:11px;padding:11px 12px;outline:none
+}
+input:focus,textarea:focus{border-color:#7a4a55;box-shadow:0 0 0 3px rgba(181,74,98,.12)}
+textarea{min-height:105px;resize:vertical}
+.short-textarea{min-height:58px}
+.segment{display:flex;gap:8px;flex-wrap:wrap}
+.segment input,.levels input{position:absolute;opacity:0;pointer-events:none}
+.segment label{
+  margin:0;padding:9px 12px;border:1px solid var(--line);border-radius:999px;
+  background:#121419;color:var(--muted);cursor:pointer
+}
+.segment input:checked+label{background:#3a1f27;border-color:#8f3d52;color:#fff}
+.levels{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px}
+.levels.five{grid-template-columns:repeat(5,minmax(0,1fr))}
+.levels label{
+  text-align:center;margin:0;padding:10px 0;border-radius:10px;border:1px solid var(--line);
+  background:#121419;color:var(--muted);cursor:pointer
+}
+.levels input:checked+label{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
+.hidden{display:none!important}
+
+.report-split{
+  grid-column:1/-1;width:100%;display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:stretch
+}
+.report-split>.card{height:100%}
+.right-stack{display:grid;grid-template-rows:auto 1fr;gap:18px;min-width:0}
+.other-card{display:flex;flex-direction:column}
+.other-card .field{display:flex;flex:1;flex-direction:column;margin-bottom:0}
+.other-card textarea{flex:1;min-height:150px}
+
+.print-summary{display:none}
+.print-summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.print-summary-grid>div{border:1px solid #bbb;border-radius:6px;padding:10px 12px}
+.print-summary-grid span{display:block;color:#555;font-size:11px;text-transform:uppercase;margin-bottom:4px}
+.print-summary-grid strong{color:#111;font-size:15px}
+.footer-note{text-align:center;color:var(--muted);font-size:12px;margin:26px 0 6px}
+.print-footer{display:none}
+
+@media(max-width:1050px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .report-split{grid-template-columns:1fr}
+  .right-stack{grid-template-rows:auto auto}
+}
+@media(max-width:700px){
+  .main{padding:18px}.grid,.row{grid-template-columns:1fr}.full{grid-column:auto}
+  .topbar{flex-direction:column}.action-stack{align-items:stretch}.actions,.utility-actions{justify-content:flex-start}.levels{grid-template-columns:repeat(5,1fr)}
+}
+@page{
+  size:A4;
+  margin:14mm 13mm 15mm;
+}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{
+    background:#fff!important;
+    color:#161616;
+    font-family:"Segoe UI",Arial,sans-serif;
+    font-size:10.5pt;
+  }
+  .sidebar,.actions,.footer-note{display:none!important}
+  .app{display:block}
+  .main{padding:0;max-width:none;width:100%}
+  .topbar{
+    display:block;
+    margin:0 0 14px;
+    padding:0 0 10px;
+    border-bottom:2px solid #1f1f1f;
+  }
+  .topbar h2{
+    margin:0;
+    font-size:24pt;
+    font-weight:700;
+    letter-spacing:.02em;
+    color:#111;
+  }
+  .topbar p,.statusbar{display:none!important}
+  .print-summary{
+    display:block!important;
+    margin:0 0 15px;
+  }
+  .print-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:7px;
+  }
+  .print-summary-grid>div{
+    border:1px solid #cfcfcf;
+    border-radius:5px;
+    padding:8px 9px;
+    background:#f7f7f7;
+    min-height:47px;
+  }
+  .print-summary-grid span{
+    display:block;
+    margin-bottom:3px;
+    color:#666;
+    font-size:7.8pt;
+    font-weight:600;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+  .print-summary-grid strong{
+    color:#111;
+    font-size:11pt;
+    font-weight:700;
+  }
+  .grid{gap:10px}
+  .report-split{gap:10px}
+  .right-stack{gap:10px}
+  .card{
+    background:#fff!important;
+    color:#111;
+    border:1px solid #d6d6d6;
+    border-radius:7px;
+    padding:12px 13px;
+    box-shadow:none!important;
+    break-inside:avoid;
+  }
+  .card h3{
+    margin:0 0 10px;
+    padding-bottom:5px;
+    border-bottom:1px solid #d9d9d9;
+    color:#111;
+    font-size:12.5pt;
+    font-weight:700;
+  }
+  .field{margin-bottom:9px}
+  .field:last-child{margin-bottom:0}
+  label{
+    margin-bottom:4px;
+    color:#333;
+    font-size:8.8pt;
+    font-weight:600;
+  }
+  .hint{
+    color:#777!important;
+    font-weight:400;
+  }
+  input[type=text],input[type=date],textarea{
+    background:#fff!important;
+    color:#111!important;
+    border:0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    padding:1px 0!important;
+    font-size:10pt;
+    line-height:1.35;
+  }
+  textarea{
+    overflow:visible!important;
+    resize:none!important;
+    min-height:0!important;
+    white-space:pre-wrap;
+  }
+  .segment,.levels{gap:5px}
+  .segment label,.levels label{
+    background:#fff!important;
+    color:#555!important;
+    border:1px solid #cfcfcf!important;
+    box-shadow:none!important;
+    padding:5px 7px;
+    font-size:8.5pt;
+  }
+  .levels label{padding:5px 0}
+  .segment input:checked+label,
+  .levels input:checked+label{
+    background:#222!important;
+    color:#fff!important;
+    border-color:#222!important;
+    font-weight:700;
+  }
+  .hidden{display:none!important}
+  .other-card textarea{min-height:70px!important}
+  .print-footer{
+    display:block!important;
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:-8mm;
+    text-align:center;
+    color:#777;
+    font-size:8pt;
+  }
+  .page-number::after{content:counter(page);}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>Tagesbericht</h1>
+      <p>Digitales Berichtsbuch</p>
+    </div>
+    <button class="nav-btn new-report-btn" id="newBtn" type="button"><span class="new-report-icon">＋</span><span>Neuer Bericht</span></button>
+    <input id="importFile" type="file" accept="application/json,.json" class="hidden">
+    <div class="archive-tools">
+      <input id="archiveSearch" type="text" placeholder="Datum oder Bericht-Nr. suchen">
+      <div class="archive-filter">
+        <button type="button" class="filter-btn active" data-filter="all">Alle</button>
+        <button type="button" class="filter-btn" data-filter="draft">Entwürfe</button>
+        <button type="button" class="filter-btn" data-filter="done">Abgeschlossen</button>
+      </div>
+    </div>
+    <div class="archive-title">Archiv</div>
+    <div id="archive"></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h2>Tagesbericht</h2>
+        <p id="subtitle">Neuen Bericht erfassen · alle Felder frei editierbar</p>
+        <div class="statusbar"><span id="statusDot" class="dot"></span><span id="statusText">Entwurf</span></div>
+      </div>
+      <div class="action-stack">
+        <div class="actions">
+          <button class="btn ghost" id="resetBtn" type="button">Zurücksetzen</button>
+          <button class="btn" id="saveBtn" type="button">Speichern</button>
+          <button class="btn hidden" id="duplicateBtn" type="button">Duplizieren</button>
+          <button class="btn primary" id="finishBtn" type="button">Bericht abschließen</button>
+          <button class="btn danger hidden" id="deleteBtn" type="button">Löschen</button>
+        </div>
+        <div class="utility-actions">
+          <button class="btn utility-btn" id="printBtn" type="button">🖨 Drucken / PDF</button>
+          <button class="btn utility-btn" id="exportBtn" type="button">⬇ Backup exportieren</button>
+          <button class="btn utility-btn" id="importBtn" type="button">⬆ Backup importieren</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="print-summary" aria-label="Berichtsübersicht">
+      <div class="print-summary-grid">
+        <div><span>Bericht-Nr.</span><strong id="printReportNo">–</strong></div>
+        <div><span>Datum</span><strong id="printDate">–</strong></div>
+        <div><span>Erregungslevel</span><strong id="printLevel">–</strong></div>
+        <div><span>Alltag</span><strong id="printDay">–</strong></div>
+        <div><span>Verschlossen</span><strong id="printKg">–</strong></div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card full">
+        <h3>Berichtsdaten</h3>
+        <div class="row">
+          <div class="field">
+            <label for="reportNo">Bericht-Nr.</label>
+            <input id="reportNo" type="text">
+          </div>
+          <div class="field">
+            <label for="reportDate">Datum</label>
+            <input id="reportDate" type="date">
+          </div>
+        </div>
+      </section>
+
+      <section class="card full">
+        <h3>Hingabebericht</h3>
+        <div class="field">
+          <label>Aktuelles Erregungslevel <span class="hint">1 = gar nicht · 10 = sehr stark</span></label>
+          <div class="levels" id="arousalLevels"></div>
+        </div>
+        <div class="field">
+          <label for="arousalNotes">Was hat dich heute erregt und warum?</label>
+          <textarea id="arousalNotes"></textarea>
+        </div>
+      </section>
+
+      <section class="card full">
+        <h3>Alltag</h3>
+        <div class="field">
+          <label>Wie war dein Tag? <span class="hint">1 = scheiße · 10 = gut</span></label>
+          <div class="levels" id="dayLevels"></div>
+        </div>
+        <div class="field">
+          <label for="dayNotes">Erzähl etwas über deinen Tag</label>
+          <textarea id="dayNotes" placeholder="Was ist heute passiert?"></textarea>
+        </div>
+      </section>
+
+      <div class="report-split">
+        <section class="card">
+          <h3>Keuschheitsbericht</h3>
+          <div class="field">
+            <label>Bist du verschlossen?</label>
+            <div class="segment">
+              <input type="radio" name="kg" id="kgYes" value="Ja"><label for="kgYes">Ja</label>
+              <input type="radio" name="kg" id="kgNo" value="Nein"><label for="kgNo">Nein</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Wie verschlossen?</label>
+            <div class="segment">
+              <input type="radio" name="lockType" id="lockNormal" value="Schloss"><label for="lockNormal">Schloss</label>
+              <input type="radio" name="lockType" id="lockNumbered" value="Nummeriertes Schloss"><label for="lockNumbered">Nummeriertes Schloss</label>
+            </div>
+          </div>
+
+          <div class="field hidden" id="lockNumberWrap">
+            <label for="lockNo">Schlossnummer</label>
+            <input id="lockNo" type="text">
+          </div>
+
+          <div class="field">
+            <label>Körperliches Empfinden <span class="hint">1 = sehr unangenehm · 5 = sehr angenehm</span></label>
+            <div class="levels five">
+              <input type="radio" name="feel" id="feel1" value="1"><label for="feel1">1</label>
+              <input type="radio" name="feel" id="feel2" value="2"><label for="feel2">2</label>
+              <input type="radio" name="feel" id="feel3" value="3"><label for="feel3">3</label>
+              <input type="radio" name="feel" id="feel4" value="4"><label for="feel4">4</label>
+              <input type="radio" name="feel" id="feel5" value="5"><label for="feel5">5</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="chastityNotes">Anmerkungen</label>
+            <textarea id="chastityNotes"></textarea>
+          </div>
+        </section>
+
+        <div class="right-stack">
+          <section class="card">
+            <h3>Gehorsamsbericht</h3>
+            <div class="field">
+              <label>Möchtest du etwas beichten?</label>
+              <div class="segment">
+                <input type="radio" name="confession" id="confessionYes" value="Ja"><label for="confessionYes">Ja</label>
+                <input type="radio" name="confession" id="confessionNo" value="Nein"><label for="confessionNo">Nein</label>
+              </div>
+            </div>
+            <div class="field">
+              <label for="confessionText">Beichte</label>
+              <textarea id="confessionText" class="short-textarea" placeholder="Hier kannst du deine Beichte eintragen."></textarea>
+            </div>
+          </section>
+
+          <section class="card other-card">
+            <h3>Sonstiges</h3>
+            <div class="field">
+              <label for="otherNotes">Weitere Anmerkungen</label>
+              <textarea id="otherNotes"></textarea>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div class="print-footer">Tagesbericht · Seite <span class="page-number"></span></div>
+    <div class="footer-note">Alle Angaben werden manuell eingetragen und lokal in diesem Browser gespeichert.</div>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY="daily_report_clean_v1";
+  let currentId=null;
+  let reports=[];
+  let archiveFilter="all";
+
+  const $=id=>document.getElementById(id);
+
+  function localToday(){
+    const d=new Date();
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,"0");
+    const day=String(d.getDate()).padStart(2,"0");
+    return y+"-"+m+"-"+day;
+  }
+
+  function loadReports(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);
+      reports=raw?JSON.parse(raw):[];
+      if(!Array.isArray(reports)) reports=[];
+    }catch(e){
+      reports=[];
+    }
+  }
+
+  function persist(){
+    try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(reports)); }catch(e){}
+  }
+
+  function selected(name){
+    const el=document.querySelector('input[name="'+name+'"]:checked');
+    return el?el.value:"";
+  }
+
+  function setSelected(name,value){
+    document.querySelectorAll('input[name="'+name+'"]').forEach(el=>{
+      el.checked=String(el.value)===String(value||"");
+    });
+  }
+
+  function buildScale(containerId,name,prefix,max){
+    const box=$(containerId);
+    box.innerHTML="";
+    for(let i=1;i<=max;i++){
+      const input=document.createElement("input");
+      input.type="radio"; input.name=name; input.id=prefix+i; input.value=String(i);
+      const label=document.createElement("label");
+      label.htmlFor=prefix+i; label.textContent=String(i);
+      box.appendChild(input); box.appendChild(label);
+    }
+  }
+
+  function nextNumber(){
+    const year=String(new Date().getFullYear()).slice(-2);
+    const nums=reports.map(r=>String(r.reportNo||""))
+      .filter(v=>v.endsWith("/"+year))
+      .map(v=>parseInt(v.split("/")[0],10))
+      .filter(Number.isFinite);
+    return String((nums.length?Math.max(...nums):0)+1).padStart(2,"0")+"/"+year;
+  }
+
+  function toggleLockNumber(){
+    const numbered=selected("lockType")==="Nummeriertes Schloss";
+    $("lockNumberWrap").classList.toggle("hidden",!numbered);
+    if(!numbered) $("lockNo").value="";
+  }
+
+  function setStatus(done){
+    $("statusText").textContent=done?"Abgeschlossen":"Entwurf";
+    $("statusDot").classList.toggle("done",done);
+  }
+
+  function updatePrintSummary(){
+    $("printReportNo").textContent=$("reportNo").value.trim()||"–";
+    const d=$("reportDate").value;
+    if(d){
+      const p=d.split("-");
+      $("printDate").textContent=p.length===3?p[2]+"."+p[1]+"."+p[0]:d;
+    }else $("printDate").textContent="–";
+    const level=selected("level");
+    $("printLevel").textContent=level?level+"/10":"–";
+    const day=selected("dayRating");
+    $("printDay").textContent=day?day+"/10":"–";
+    $("printKg").textContent=selected("kg")||"–";
+  }
+
+  function collect(){
+    return {
+      id:currentId||String(Date.now()),
+      reportNo:$("reportNo").value.trim(),
+      date:$("reportDate").value,
+      level:selected("level"),
+      arousalNotes:$("arousalNotes").value,
+      dayRating:selected("dayRating"),
+      dayNotes:$("dayNotes").value,
+      kg:selected("kg"),
+      lockType:selected("lockType"),
+      lockNo:$("lockNo").value,
+      feel:selected("feel"),
+      chastityNotes:$("chastityNotes").value,
+      confession:selected("confession"),
+      confessionText:$("confessionText").value,
+      otherNotes:$("otherNotes").value,
+      completed:false
+    };
+  }
+
+  function fill(r){
+    currentId=r.id;
+    $("reportNo").value=r.reportNo||"";
+    $("reportDate").value=r.date||localToday();
+    setSelected("level",r.level);
+    $("arousalNotes").value=r.arousalNotes||"";
+    setSelected("dayRating",r.dayRating);
+    $("dayNotes").value=r.dayNotes||"";
+    setSelected("kg",r.kg);
+    setSelected("lockType",r.lockType);
+    $("lockNo").value=r.lockNo||"";
+    setSelected("feel",r.feel);
+    $("chastityNotes").value=r.chastityNotes||"";
+    setSelected("confession",r.confession);
+    $("confessionText").value=r.confessionText||"";
+    $("otherNotes").value=r.otherNotes||"";
+    toggleLockNumber();
+    $("deleteBtn").classList.remove("hidden");
+    $("duplicateBtn").classList.remove("hidden");
+    $("subtitle").textContent="Bericht "+(r.reportNo||"")+" bearbeiten";
+    setStatus(Boolean(r.completed));
+    updatePrintSummary();
+  }
+
+  function resetForm(){
+    currentId=null;
+    document.querySelectorAll('input[type="text"], textarea').forEach(el=>el.value="");
+    document.querySelectorAll('input[type="radio"]').forEach(el=>el.checked=false);
+    $("reportNo").value=nextNumber();
+    $("reportDate").value=localToday();
+    $("lockNumberWrap").classList.add("hidden");
+    $("deleteBtn").classList.add("hidden");
+    $("duplicateBtn").classList.add("hidden");
+    $("subtitle").textContent="Neuen Bericht erfassen · alle Felder frei editierbar";
+    setStatus(false);
+    updatePrintSummary();
+  }
+
+  function save(completed){
+    const r=collect();
+    r.completed=completed;
+    const index=reports.findIndex(x=>x.id===r.id);
+    if(index>=0) reports[index]=r; else reports.unshift(r);
+    currentId=r.id;
+    persist();
+    renderArchive();
+    fill(r);
+  }
+
+
+  function duplicateCurrent(){
+    if(!currentId) return;
+    const original=reports.find(r=>r.id===currentId);
+    if(!original) return;
+
+    const copy=JSON.parse(JSON.stringify(original));
+    copy.id=String(Date.now());
+    copy.reportNo=nextNumber();
+    copy.date=localToday();
+    copy.completed=false;
+
+    reports.unshift(copy);
+    persist();
+    renderArchive();
+    fill(copy);
+    $("subtitle").textContent="Duplizierter Bericht · bitte prüfen und anpassen";
+  }
+
+  function removeCurrent(){
+    if(!currentId) return;
+    if(!window.confirm("Diesen Bericht wirklich löschen?")) return;
+    reports=reports.filter(r=>r.id!==currentId);
+    persist();
+    renderArchive();
+    resetForm();
+  }
+
+  function renderArchive(){
+    const box=$("archive");
+    box.innerHTML="";
+
+    const query=($("archiveSearch")?.value||"").trim().toLowerCase();
+
+    const filtered=reports.filter(r=>{
+      if(archiveFilter==="draft" && r.completed) return false;
+      if(archiveFilter==="done" && !r.completed) return false;
+
+      if(query){
+        const hay=[r.reportNo||"",r.date||""].join(" ").toLowerCase();
+        if(!hay.includes(query)) return false;
+      }
+      return true;
+    });
+
+    if(!filtered.length){
+      const d=document.createElement("div");
+      d.className="empty";
+      d.textContent=reports.length?"Keine passenden Berichte gefunden.":"Noch keine gespeicherten Berichte.";
+      box.appendChild(d);
+      return;
+    }
+
+    filtered.forEach(r=>{
+      const b=document.createElement("button");
+      b.type="button";
+      b.className="archive-item";
+
+      const strong=document.createElement("strong");
+      strong.textContent="#"+(r.reportNo||"–")+(r.completed?" ✓":"");
+
+      const span=document.createElement("span");
+      const parts=[];
+      parts.push(r.date||"ohne Datum");
+      if(r.level) parts.push("Erregung "+r.level+"/10");
+      if(r.dayRating) parts.push("Alltag "+r.dayRating+"/10");
+      span.textContent=parts.join(" · ");
+
+      b.append(strong,span);
+      b.addEventListener("click",()=>fill(r));
+      box.appendChild(b);
+    });
+  }
+
+  function exportBackup(){
+    const payload={
+      app:"Tagesbericht",
+      version:1,
+      exportedAt:new Date().toISOString(),
+      reports:reports
+    };
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    const d=new Date();
+    const stamp=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    a.href=url;
+    a.download="Tagesbericht_Backup_"+stamp+".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
+  function importBackupFile(file){
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      try{
+        const parsed=JSON.parse(String(reader.result||""));
+        const incoming=Array.isArray(parsed)?parsed:parsed.reports;
+        if(!Array.isArray(incoming)) throw new Error("invalid");
+        if(!window.confirm("Backup importieren? Dabei wird das aktuelle Archiv ersetzt.")){
+          $("importFile").value="";
+          return;
+        }
+        reports=incoming;
+        persist();
+        renderArchive();
+        resetForm();
+        window.alert("Backup wurde importiert.");
+      }catch(e){
+        window.alert("Die Backup-Datei konnte nicht gelesen werden.");
+      }finally{
+        $("importFile").value="";
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  buildScale("arousalLevels","level","lvl",10);
+  buildScale("dayLevels","dayRating","day",10);
+  loadReports();
+  renderArchive();
+  resetForm();
+
+  $("newBtn").addEventListener("click",resetForm);
+  $("resetBtn").addEventListener("click",resetForm);
+  $("saveBtn").addEventListener("click",()=>save(false));
+  $("finishBtn").addEventListener("click",()=>save(true));
+  $("deleteBtn").addEventListener("click",removeCurrent);
+  $("duplicateBtn").addEventListener("click",duplicateCurrent);
+  $("archiveSearch").addEventListener("input",renderArchive);
+  document.querySelectorAll(".filter-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      archiveFilter=btn.dataset.filter||"all";
+      document.querySelectorAll(".filter-btn").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      renderArchive();
+    });
+  });
+  $("printBtn").addEventListener("click",()=>{updatePrintSummary();window.print();});
+  $("exportBtn").addEventListener("click",exportBackup);
+  $("importBtn").addEventListener("click",()=>$("importFile").click());
+  $("importFile").addEventListener("change",e=>importBackupFile(e.target.files && e.target.files[0]));
+  document.querySelectorAll('input[name="lockType"]').forEach(el=>el.addEventListener("change",toggleLockNumber));
+  document.querySelectorAll("input,textarea").forEach(el=>{
+    el.addEventListener("input",updatePrintSummary);
+    el.addEventListener("change",updatePrintSummary);
+  });
+  let printTextareaHeights=[];
+  window.addEventListener("beforeprint",()=>{
+    updatePrintSummary();
+    printTextareaHeights=[];
+    document.querySelectorAll("textarea").forEach(el=>{
+      printTextareaHeights.push([el,el.style.height]);
+      el.style.height="auto";
+      el.style.height=el.scrollHeight+"px";
+    });
+  });
+  window.addEventListener("afterprint",()=>{
+    printTextareaHeights.forEach(([el,height])=>el.style.height=height);
+    printTextareaHeights=[];
+  });
+})();
+</script>
+</body>
+</html>
